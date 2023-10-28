@@ -14,7 +14,7 @@
 struct USART_buffer {
 	uint8_t tx_buffer[BUFFER_SIZE];
 	uint8_t rx_buffer[BUFFER_SIZE];
-	uint8_t proccess_buffer[BUFFER_SIZE];
+	uint8_t rx_process_buffer[BUFFER_SIZE];
 	int16_t rx_counter;
   	int16_t rx_process_counter;
 	int16_t tx_counter;

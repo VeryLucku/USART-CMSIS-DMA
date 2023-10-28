@@ -12,6 +12,10 @@ struct USART_buffer husart2;
 uint8_t st_pos = -1;
 volatile uint8_t st_send_pos = 0;
 
+void add_to_circle_buffer(uint8_t *buffer, uint8_t data, int16_t *counter);
+void extract_string_from_buffer(uint8_t *buffer, char *extract_to, int16_t st_pos);
+
+
 void write_data(char *result)
 {
 	strncpy(husart2.tx_buffer, result, BUFFER_SIZE);
@@ -19,7 +23,9 @@ void write_data(char *result)
 	husart2.tx_counter = 0;
 
 	CLEAR_BIT(TX_DMA_S->CR, DMA_SxCR_EN);
-	while (TX_DMA_S->CR & DMA_SxCR_EN) {}
+	while (TX_DMA_S->CR & DMA_SxCR_EN)
+	{
+	}
 	SET_BIT(TX_DMA_S->NDTR, husart2.tx_len);
 	SET_BIT(TX_DMA_S->CR, DMA_SxCR_EN);
 }
@@ -28,8 +34,8 @@ char *get_data()
 {
 	if (ready_to_send)
 	{
-		strncpy(data_to_send, &husart2.proccess_buffer[st_send_pos], BUFFER_SIZE);
 		ready_to_send = false;
+		extract_string_from_buffer(husart2.rx_process_buffer, data_to_send, st_send_pos);
 		return data_to_send;
 	}
 	return NULL;
@@ -47,31 +53,58 @@ void process_user_input(char *buffer, uint32_t size)
 		{
 			st_pos = husart2.rx_process_counter;
 			transaction_started = true;
-			continue;;
+			continue;
+			;
 		}
 
 		if (char_digit == END_TR_CHAR && transaction_started)
 		{
 			st_send_pos = st_pos;
 			ready_to_send = true;
-			husart2.proccess_buffer[husart2.rx_process_counter++] = 0;
+			add_to_circle_buffer(husart2.rx_process_buffer, 0, &husart2.rx_process_counter);
+			// husart2.proccess_buffer[husart2.rx_process_counter++] = 0;
 			transaction_started = false;
-			continue;;
+			continue;
 		}
 
 		if (char_digit > '9' || char_digit < '0')
 		{
 			transaction_started = false;
-			continue;;
+			continue;
+			;
 		}
 
 		if (transaction_started)
 		{
-			husart2.proccess_buffer[husart2.rx_process_counter++] = char_digit;
+			add_to_circle_buffer(husart2.rx_process_buffer, char_digit, &husart2.rx_process_counter);
+			// husart2.proccess_buffer[husart2.rx_process_counter++] = char_digit;
 		}
 	}
 }
 
+void add_to_circle_buffer(uint8_t *buffer, uint8_t data, int16_t *counter)
+{
+	buffer[*counter] = data;
+
+	if (++*counter == BUFFER_SIZE)
+	{
+		*counter = 0;
+	}
+}
+
+void extract_string_from_buffer(uint8_t *buffer, char *extract_to, int16_t st_pos) 
+{
+	uint8_t res_pos = 0;
+
+	do {
+		extract_to[res_pos++] = buffer[st_pos++];
+
+		if (st_pos == BUFFER_SIZE && buffer[st_pos-1] != '\0') {
+			st_pos = 0;
+		}
+	} while (buffer[st_pos-1] != '\0');
+	
+}
 
 void DMA1_Stream6_IRQHandler(void)
 {
@@ -91,7 +124,7 @@ void DMA1_Stream5_IRQHandler(void)
 	if (READ_BIT(DMA1->HISR, DMA_HISR_TCIF5))
 	{
 		SET_BIT(DMA1->HIFCR, DMA_HIFCR_CTCIF5);
-		CLEAR_BIT(RX_DMA_S->CR, DMA_SxCR_EN);
+		// CLEAR_BIT(RX_DMA_S->CR, DMA_SxCR_EN);
 
 		process_user_input(&husart2.rx_buffer[last_end_point], BUFFER_SIZE - last_end_point);
 
@@ -104,8 +137,8 @@ void USART2_IRQHandler(void)
 	if (READ_BIT(USART2->SR, USART_SR_IDLE))
 	{
 		USART2->DR;
-		packet_size = last_end_point - (BUFFER_SIZE - RX_DMA_S->NDTR);
-	
+		packet_size = -last_end_point + (BUFFER_SIZE - RX_DMA_S->NDTR);
+
 		process_user_input(&husart2.rx_buffer[last_end_point], packet_size);
 
 		last_end_point += packet_size;
