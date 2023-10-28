@@ -72,6 +72,7 @@ void process_user_input(char *buffer, uint32_t size)
 	}
 }
 
+
 void DMA1_Stream6_IRQHandler(void)
 {
 	if ((DMA1->HISR & DMA_HISR_TCIF6) == DMA_HISR_TCIF6)
@@ -82,28 +83,32 @@ void DMA1_Stream6_IRQHandler(void)
 	}
 }
 
+uint32_t last_end_point = 0;
+uint32_t packet_size;
+
 void DMA1_Stream5_IRQHandler(void)
 {
-	if ((DMA1->HISR & DMA_HISR_TCIF5) == DMA_HISR_TCIF5)
+	if (READ_BIT(DMA1->HISR, DMA_HISR_TCIF5))
 	{
+		SET_BIT(DMA1->HIFCR, DMA_HIFCR_CTCIF5);
 		CLEAR_BIT(RX_DMA_S->CR, DMA_SxCR_EN);
 
-		DMA1->HIFCR |= DMA_HIFCR_CTCIF5;
+		process_user_input(&husart2.rx_buffer[last_end_point], BUFFER_SIZE - last_end_point);
+
+		last_end_point = 0;
 	}
 }
 
-uint32_t last_end_point = BUFFER_SIZE;
-uint32_t packet_size;
 void USART2_IRQHandler(void)
 {
-	if (READ_BIT(USART2->SR, USART_SR_IDLE) == USART_SR_IDLE)
+	if (READ_BIT(USART2->SR, USART_SR_IDLE))
 	{
 		USART2->DR;
-		packet_size = last_end_point - RX_DMA_S->NDTR;
+		packet_size = last_end_point - (BUFFER_SIZE - RX_DMA_S->NDTR);
 	
-		process_user_input(&husart2.rx_buffer[BUFFER_SIZE - last_end_point], packet_size);
+		process_user_input(&husart2.rx_buffer[last_end_point], packet_size);
 
-		last_end_point -= packet_size;
+		last_end_point += packet_size;
 	}
 }
 
