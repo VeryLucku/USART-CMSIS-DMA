@@ -1,4 +1,4 @@
-#include "cmsis_init.h"
+#include "usart2_init.h"
 
 struct USART_buffer *buf;
 
@@ -70,8 +70,8 @@ void DMA_init()
     SET_BIT(RX_DMA_S->PAR, (uint32_t)(&USART2->DR));
     SET_BIT(TX_DMA_S->PAR, (uint32_t)(&USART2->DR));
 
-    SET_BIT(RX_DMA_S->M0AR, (uint32_t)buf->rx_buffer);
-    SET_BIT(TX_DMA_S->M0AR, (uint32_t)buf->tx_buffer);
+    SET_BIT(RX_DMA_S->M0AR, (uint32_t)husart2.rx_buffer);
+    SET_BIT(TX_DMA_S->M0AR, (uint32_t)husart2.tx_buffer);
 
     SET_BIT(RX_DMA_S->NDTR, BUFFER_SIZE);
 
@@ -87,6 +87,3 @@ void DMA_init()
     SET_BIT(RX_DMA_S->CR, DMA_SxCR_EN);
 }
 
-void set_husart_buffer(struct USART_buffer *buffer) {
-    buf = buffer;
-}
