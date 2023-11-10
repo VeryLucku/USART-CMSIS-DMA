@@ -7,7 +7,7 @@
 #define RX_DMA_CH 4
 #define TX_DMA_CH 4
 
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 4
 
 #define START_TR_CHAR 'S'
 #define END_TR_CHAR 'E'
