@@ -1,3 +1,6 @@
+#ifndef USART2_INIT_H_
+#define USART2_INIT_H_
+
 #include "stm32f4xx.h"
 #include "usart2.h"
 
@@ -28,3 +31,5 @@ extern struct USART_buffer husart2;
 
 void usart_init();
 void DMA_init();
+
+#endif // USART2_INIT_H_

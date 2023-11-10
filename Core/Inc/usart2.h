@@ -1,3 +1,6 @@
+#ifndef USART2_H_
+#define USART2_H_
+
 #include "main.h"
 #include <stdint.h>
 #include <string.h>
@@ -12,3 +15,5 @@ void usart2_init();
 void set_packet_parcer(void (*parcer)(char *, uint32_t));
 
 void UART2_Packet_Recieved_Callback();
+
+#endif // USART2_H_
